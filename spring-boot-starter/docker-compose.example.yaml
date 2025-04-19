@@ -1,0 +1,46 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: your_db_name
+      POSTGRES_USER: your_db_user
+      POSTGRES_PASSWORD: your_db_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    container_name: spring-boot-starter
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/your_db_name
+      SPRING_DATASOURCE_USERNAME: your_db_user
+      SPRING_DATASOURCE_PASSWORD: your_db_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+      JWT_SECRET: your_jwt_secret
+      JWT_EXPIRATION: your_jwt_expiration
+      JWT_REFRESHEXPIRATION: your_jwt_refresh_expiration
+
+      SPRING_MAIL_HOST: smtp.yourmailprovider.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: your_email@example.com
+      SPRING_MAIL_PASSWORD: your_email_password
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+
+      APP_VERIFICATION_BASE_URL: http://localhost:8080
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres-data:

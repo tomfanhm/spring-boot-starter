@@ -48,7 +48,6 @@ public class UserService {
 	@Autowired
 	private UserRepository userRepository;
 
-	@Transactional
 	public JwtResponse authenticate(LoginRequest loginRequest) {
 
 		User user = userRepository.findByEmail(loginRequest.getEmail())
