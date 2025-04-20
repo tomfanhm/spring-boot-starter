@@ -4,6 +4,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tomfanhm.security.jwt.dto.request.ChangePasswordRequest;
 import com.tomfanhm.security.jwt.dto.request.LoginRequest;
 import com.tomfanhm.security.jwt.dto.request.RefreshTokenRequest;
 import com.tomfanhm.security.jwt.dto.request.RegisterRequest;
@@ -41,6 +43,14 @@ public class AuthController {
 
 	@Autowired
 	private UserService userService;
+
+	@PostMapping("/change-password")
+	@PreAuthorize("hasRole('USER') or hasRole('MODERATOR') or hasRole('ADMIN')")
+	public ResponseEntity<MessageResponse> changePassword(
+			@Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
+		userService.changePassword(changePasswordRequest);
+		return ResponseEntity.ok(new MessageResponse("Password changed."));
+	}
 
 	@PostMapping("/forgot-password")
 	public ResponseEntity<MessageResponse> forgotPassword(@RequestBody Map<String, String> payload) {

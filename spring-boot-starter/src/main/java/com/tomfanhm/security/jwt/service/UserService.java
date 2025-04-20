@@ -9,11 +9,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tomfanhm.security.jwt.dto.request.ChangePasswordRequest;
 import com.tomfanhm.security.jwt.dto.request.LoginRequest;
 import com.tomfanhm.security.jwt.dto.response.JwtResponse;
 import com.tomfanhm.security.jwt.exception.AccountLockedException;
@@ -22,11 +24,15 @@ import com.tomfanhm.security.jwt.exception.InvalidTokenException;
 import com.tomfanhm.security.jwt.exception.MailNotVerifiedException;
 import com.tomfanhm.security.jwt.exception.NotFoundException;
 import com.tomfanhm.security.jwt.exception.TokenExpiredException;
+import com.tomfanhm.security.jwt.exception.UserNotFoundException;
 import com.tomfanhm.security.jwt.model.RefreshToken;
 import com.tomfanhm.security.jwt.model.User;
 import com.tomfanhm.security.jwt.repository.UserRepository;
 import com.tomfanhm.security.jwt.security.JwtTokenProvider;
 import com.tomfanhm.security.jwt.security.UserDetailsImplement;
+import com.tomfanhm.security.jwt.util.AuthUtil;
+
+import jakarta.mail.MessagingException;
 
 @Service
 public class UserService {
@@ -48,8 +54,8 @@ public class UserService {
 	@Autowired
 	private UserRepository userRepository;
 
+	@Transactional(noRollbackFor = InvalidCredentialsException.class)
 	public JwtResponse authenticate(LoginRequest loginRequest) {
-
 		User user = userRepository.findByEmail(loginRequest.getEmail())
 				.orElseThrow(() -> new NotFoundException("User not found."));
 
@@ -70,7 +76,7 @@ public class UserService {
 			throw new MailNotVerifiedException("Please verify your email before login.");
 
 		try {
-			var auth = authenticationManager.authenticate(
+			Authentication auth = authenticationManager.authenticate(
 					new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
 			user.setLoginAttempts(0);
@@ -100,6 +106,19 @@ public class UserService {
 	}
 
 	@Transactional
+	public void changePassword(ChangePasswordRequest changePasswordRequest) {
+		Long userId = AuthUtil.getUserId();
+		User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId));
+
+		if (!passwordEncoder.matches(changePasswordRequest.getCurrentPassword(), user.getPassword())) {
+			throw new InvalidCredentialsException("Current password is incorrect.");
+		}
+
+		user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
+		userRepository.save(user);
+	}
+
+	@Transactional
 	public void forgotPassword(String email) {
 		userRepository.findByEmail(email).ifPresent(user -> {
 			String token = UUID.randomUUID().toString();
@@ -110,7 +129,11 @@ public class UserService {
 			user.setResetPasswordTokenExpiry(calendar.getTime());
 			userRepository.save(user);
 
-			emailService.sendPasswordResetEmail(user.getEmail(), token);
+			try {
+				emailService.sendPasswordResetEmail(user.getEmail(), token);
+			} catch (MessagingException e) {
+				throw new RuntimeException("Failed to send email.");
+			}
 		});
 	}
 

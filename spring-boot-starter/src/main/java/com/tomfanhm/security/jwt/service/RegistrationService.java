@@ -17,6 +17,8 @@ import com.tomfanhm.security.jwt.model.User;
 import com.tomfanhm.security.jwt.repository.RoleRepository;
 import com.tomfanhm.security.jwt.repository.UserRepository;
 
+import jakarta.mail.MessagingException;
+
 @Service
 public class RegistrationService {
 	@Autowired
@@ -32,19 +34,19 @@ public class RegistrationService {
 	private UserRepository userRepository;
 
 	@Transactional
-	public void register(RegisterRequest req) {
+	public void register(RegisterRequest registerRequest) {
 
-		if (userRepository.existsByUsername(req.getUsername())) {
+		if (userRepository.existsByUsername(registerRequest.getUsername())) {
 			throw new DuplicateResourceException("Username is already taken.");
 		}
-		if (userRepository.existsByEmail(req.getEmail())) {
+		if (userRepository.existsByEmail(registerRequest.getEmail())) {
 			throw new DuplicateResourceException("Email is already in use.");
 		}
 
 		User user = new User();
-		user.setUsername(req.getUsername());
-		user.setEmail(req.getEmail());
-		user.setPassword(passwordEncoder.encode(req.getPassword()));
+		user.setUsername(registerRequest.getUsername());
+		user.setEmail(registerRequest.getEmail());
+		user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
 
 		Role userRole = roleRepository.findByName(ERole.ROLE_USER)
 				.orElseThrow(() -> new RoleNotFoundException(ERole.ROLE_USER.name()));
@@ -55,6 +57,10 @@ public class RegistrationService {
 		user.setEmailVerified(false);
 
 		userRepository.save(user);
-		emailService.sendVerificationEmail(user.getEmail(), token);
+		try {
+			emailService.sendVerificationEmail(user.getEmail(), token);
+		} catch (MessagingException e) {
+			throw new RuntimeException("Failed to send email.");
+		}
 	}
 }
