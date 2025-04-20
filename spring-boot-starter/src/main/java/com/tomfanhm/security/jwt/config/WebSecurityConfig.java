@@ -17,11 +17,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.tomfanhm.security.jwt.security.JwtAuthenticationEntryPoint;
 import com.tomfanhm.security.jwt.security.JwtAuthenticationFilter;
+import com.tomfanhm.security.jwt.security.RateLimitingFilter;
 import com.tomfanhm.security.jwt.security.UserDetailsServiceImplement;
 
 @Configuration
 @EnableMethodSecurity
 public class WebSecurityConfig {
+
 	@Autowired
 	private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
@@ -52,7 +54,8 @@ public class WebSecurityConfig {
 						.anyRequest().authenticated());
 
 		httpSecurity.authenticationProvider(authenticationProvider());
-		httpSecurity.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+		httpSecurity.addFilterBefore(rateLimitingFilter(), UsernamePasswordAuthenticationFilter.class)
+				.addFilterAfter(jwtAuthenticationFilter(), RateLimitingFilter.class);
 
 		return httpSecurity.build();
 	}
@@ -65,6 +68,11 @@ public class WebSecurityConfig {
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
+	}
+
+	@Bean
+	public RateLimitingFilter rateLimitingFilter() {
+		return new RateLimitingFilter();
 	}
 
 }

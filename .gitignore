@@ -1,5 +1,8 @@
-# Created by https://www.toptal.com/developers/gitignore/api/windows,linux,macos,visualstudio,visualstudiocode,eclipse,intellij,java,maven,gradle
-# Edit at https://www.toptal.com/developers/gitignore?templates=windows,linux,macos,visualstudio,visualstudiocode,eclipse,intellij,java,maven,gradle
+# Created by https://www.toptal.com/developers/gitignore/api/windows,linux,macos,visualstudio,visualstudiocode,eclipse,intellij,java,maven,gradle,dotenv
+# Edit at https://www.toptal.com/developers/gitignore?templates=windows,linux,macos,visualstudio,visualstudiocode,eclipse,intellij,java,maven,gradle,dotenv
+
+### dotenv ###
+.env
 
 ### Eclipse ###
 .metadata
@@ -730,6 +733,6 @@ FodyWeavers.xsd
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 
-# End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,visualstudio,visualstudiocode,eclipse,intellij,java,maven,gradle
+# End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,visualstudio,visualstudiocode,eclipse,intellij,java,maven,gradle,dotenv
 
 docker-compose.yml
