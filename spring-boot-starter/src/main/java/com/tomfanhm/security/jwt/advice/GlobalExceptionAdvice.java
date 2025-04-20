@@ -10,7 +10,6 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.context.request.WebRequest;
 
 import com.tomfanhm.security.jwt.dto.response.MessageResponse;
 import com.tomfanhm.security.jwt.exception.AccountLockedException;
@@ -26,41 +25,47 @@ public class GlobalExceptionAdvice {
 
 	private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionAdvice.class);
 
-	@ExceptionHandler({ AccountLockedException.class, InvalidCredentialsException.class, MailNotVerifiedException.class,
-			InvalidTokenException.class, TokenExpiredException.class, NotFoundException.class })
-	public ResponseEntity<MessageResponse> handle(RuntimeException exception) {
-		return ResponseEntity.badRequest().body(new MessageResponse(exception.getMessage()));
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<MessageResponse> handleAll(Exception ex) {
+		logger.error("Unhandled exception:", ex);
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+				.body(new MessageResponse("An unexpected error occurred. Please try again later."));
 	}
 
-	@ExceptionHandler(Exception.class)
-	public ResponseEntity<MessageResponse> handleAllExceptions(Exception exception, WebRequest request) {
-		logger.error("Unhandled exception occurred: {}", exception);
-		MessageResponse messageResponse = new MessageResponse("An unexpected error occurred. Please try again later.");
-		return new ResponseEntity<>(messageResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+	@ExceptionHandler({ InvalidCredentialsException.class, MailNotVerifiedException.class })
+	public ResponseEntity<MessageResponse> handleBadRequest(RuntimeException ex) {
+		return ResponseEntity.badRequest().body(new MessageResponse(ex.getMessage()));
 	}
 
 	@ExceptionHandler(DuplicateResourceException.class)
-	public ResponseEntity<MessageResponse> handleDuplicate(DuplicateResourceException exception) {
-		MessageResponse messageResponse = new MessageResponse(exception.getMessage());
-		return new ResponseEntity<>(messageResponse, HttpStatus.CONFLICT);
+	public ResponseEntity<MessageResponse> handleConflict(DuplicateResourceException ex) {
+		return ResponseEntity.status(HttpStatus.CONFLICT).body(new MessageResponse(ex.getMessage()));
+	}
+
+	@ExceptionHandler(AccountLockedException.class)
+	public ResponseEntity<MessageResponse> handleLocked(AccountLockedException ex) {
+		return ResponseEntity.status(HttpStatus.LOCKED).body(new MessageResponse(ex.getMessage()));
+	}
+
+	@ExceptionHandler(NotFoundException.class)
+	public ResponseEntity<MessageResponse> handleNotFound(NotFoundException ex) {
+		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new MessageResponse(ex.getMessage()));
+	}
+
+	@ExceptionHandler({ InvalidTokenException.class, TokenExpiredException.class })
+	public ResponseEntity<MessageResponse> handleUnauthorized(RuntimeException ex) {
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new MessageResponse(ex.getMessage()));
 	}
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
-	public ResponseEntity<MessageResponse> handleMissingServletRequestBodyException(
-			HttpMessageNotReadableException exception, WebRequest request) {
-		logger.warn("Missing or unreadable request body: {}", exception);
-		MessageResponse messageResponse = new MessageResponse("Request body is missing or unreadable.");
-		return new ResponseEntity<>(messageResponse, HttpStatus.BAD_REQUEST);
+	public ResponseEntity<MessageResponse> handleUnreadable(HttpMessageNotReadableException ex) {
+		return ResponseEntity.badRequest().body(new MessageResponse("Request body is missing or unreadable."));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
-	public ResponseEntity<MessageResponse> handleValidationExceptions(MethodArgumentNotValidException exception,
-			WebRequest request) {
-		String errorMessage = exception.getBindingResult().getAllErrors().stream()
-				.map(error -> error.getDefaultMessage()).collect(Collectors.joining("; "));
-		logger.warn("Validation errors: {}", errorMessage);
-		MessageResponse messageResponse = new MessageResponse(errorMessage);
-		return new ResponseEntity<>(messageResponse, HttpStatus.BAD_REQUEST);
+	public ResponseEntity<MessageResponse> handleValidation(MethodArgumentNotValidException ex) {
+		String errors = ex.getBindingResult().getAllErrors().stream().map(err -> err.getDefaultMessage())
+				.collect(Collectors.joining("; "));
+		return ResponseEntity.badRequest().body(new MessageResponse(errors));
 	}
-
 }

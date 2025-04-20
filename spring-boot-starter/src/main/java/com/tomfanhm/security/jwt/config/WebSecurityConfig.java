@@ -28,6 +28,12 @@ public class WebSecurityConfig {
 	private JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
 	@Autowired
+	private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+	@Autowired
+	private RateLimitingFilter rateLimitingFilter;
+
+	@Autowired
 	private UserDetailsServiceImplement userDetailsService;
 
 	@Bean
@@ -54,25 +60,15 @@ public class WebSecurityConfig {
 						.anyRequest().authenticated());
 
 		httpSecurity.authenticationProvider(authenticationProvider());
-		httpSecurity.addFilterBefore(rateLimitingFilter(), UsernamePasswordAuthenticationFilter.class)
-				.addFilterAfter(jwtAuthenticationFilter(), RateLimitingFilter.class);
+		httpSecurity.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+				.addFilterAfter(rateLimitingFilter, JwtAuthenticationFilter.class);
 
 		return httpSecurity.build();
 	}
 
 	@Bean
-	public JwtAuthenticationFilter jwtAuthenticationFilter() {
-		return new JwtAuthenticationFilter();
-	}
-
-	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
-	}
-
-	@Bean
-	public RateLimitingFilter rateLimitingFilter() {
-		return new RateLimitingFilter();
 	}
 
 }
