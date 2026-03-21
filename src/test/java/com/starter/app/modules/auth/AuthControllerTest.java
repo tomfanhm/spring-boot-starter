@@ -7,30 +7,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.starter.app.config.SecurityConfig;
 import com.starter.app.modules.auth.dto.AuthResponse;
 import com.starter.app.modules.auth.dto.LoginRequest;
 import com.starter.app.modules.auth.dto.RegisterRequest;
+import com.starter.app.modules.user.UserRepository;
+import com.starter.app.security.JwtTokenProvider;
 import com.starter.app.shared.exception.GlobalExceptionHandler;
 import com.starter.app.shared.exception.ResourceAlreadyExistsException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(
-    controllers = AuthController.class,
-    excludeAutoConfiguration = SecurityAutoConfiguration.class)
-@Import(GlobalExceptionHandler.class)
+@WebMvcTest(AuthController.class)
+@Import({GlobalExceptionHandler.class, SecurityConfig.class})
 class AuthControllerTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
 
   @MockitoBean private AuthService authService;
+  @MockitoBean private JwtTokenProvider jwtTokenProvider;
+  @MockitoBean private UserRepository userRepository;
 
   @Test
   void login_withValidCredentials_shouldReturn200WithToken() throws Exception {
