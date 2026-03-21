@@ -20,7 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private static final String[] PUBLIC_PATHS = {
-    "/api/v1/auth/**", "/swagger-ui/**", "/api/v3/api-docs/**", "/api/actuator/health"
+    "/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**", "/actuator/health"
   };
 
   private final JwtTokenProvider jwtTokenProvider;
@@ -58,7 +58,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   @Override
   protected boolean shouldNotFilter(HttpServletRequest request) {
-    String path = request.getRequestURI();
+    String path = request.getServletPath();
     for (String publicPath : PUBLIC_PATHS) {
       if (pathMatcher.match(publicPath, path)) {
         return true;

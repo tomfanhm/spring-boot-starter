@@ -10,43 +10,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.starter.app.modules.auth.dto.AuthResponse;
 import com.starter.app.modules.auth.dto.LoginRequest;
 import com.starter.app.modules.auth.dto.RegisterRequest;
-import com.starter.app.security.JwtAuthenticationFilter;
-import com.starter.app.security.JwtTokenProvider;
 import com.starter.app.shared.exception.GlobalExceptionHandler;
 import com.starter.app.shared.exception.ResourceAlreadyExistsException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(AuthController.class)
-@Import({GlobalExceptionHandler.class, AuthControllerTest.TestSecurityConfig.class})
+@WebMvcTest(
+    controllers = AuthController.class,
+    excludeAutoConfiguration = SecurityAutoConfiguration.class)
+@Import(GlobalExceptionHandler.class)
 class AuthControllerTest {
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
 
   @MockitoBean private AuthService authService;
-  @MockitoBean private JwtTokenProvider jwtTokenProvider;
-  @MockitoBean private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-  @TestConfiguration
-  static class TestSecurityConfig {
-    @Bean
-    public SecurityFilterChain testFilterChain(HttpSecurity http) throws Exception {
-      http.csrf(AbstractHttpConfigurer::disable)
-          .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-      return http.build();
-    }
-  }
 
   @Test
   void login_withValidCredentials_shouldReturn200WithToken() throws Exception {
