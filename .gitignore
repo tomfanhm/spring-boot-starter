@@ -735,4 +735,6 @@ FodyWeavers.xsd
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,visualstudio,visualstudiocode,eclipse,intellij,java,maven,gradle,dotenv
 
-docker-compose.yml
+# Environment files
+.env.local
+.env.*.local
