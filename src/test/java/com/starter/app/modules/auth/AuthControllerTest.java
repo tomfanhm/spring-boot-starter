@@ -7,12 +7,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.starter.app.config.AppProperties;
 import com.starter.app.config.SecurityConfig;
 import com.starter.app.modules.auth.dto.AuthResponse;
 import com.starter.app.modules.auth.dto.LoginRequest;
 import com.starter.app.modules.auth.dto.RegisterRequest;
 import com.starter.app.modules.user.UserRepository;
 import com.starter.app.security.JwtTokenProvider;
+import com.starter.app.shared.exception.AuthenticationException;
 import com.starter.app.shared.exception.GlobalExceptionHandler;
 import com.starter.app.shared.exception.ResourceAlreadyExistsException;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,7 @@ class AuthControllerTest {
   @MockitoBean private AuthService authService;
   @MockitoBean private JwtTokenProvider jwtTokenProvider;
   @MockitoBean private UserRepository userRepository;
+  @MockitoBean private AppProperties appProperties;
 
   @Test
   void login_withValidCredentials_shouldReturn200WithToken() throws Exception {
@@ -63,9 +66,44 @@ class AuthControllerTest {
   }
 
   @Test
+  void login_withUnknownEmail_shouldReturn401() throws Exception {
+    when(authService.login(any(LoginRequest.class)))
+        .thenThrow(new AuthenticationException("Invalid email or password"));
+
+    mockMvc
+        .perform(
+            post("/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new LoginRequest("unknown@example.com", "password123"))))
+        .andExpect(status().isUnauthorized())
+        .andExpect(jsonPath("$.status").value(401));
+  }
+
+  @Test
+  void register_withValidRequest_shouldReturn201WithToken() throws Exception {
+    when(authService.register(any(RegisterRequest.class)))
+        .thenReturn(new AuthResponse("new-jwt-token"));
+
+    mockMvc
+        .perform(
+            post("/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    objectMapper.writeValueAsString(
+                        new RegisterRequest("new@example.com", "password123", "John", "Doe"))))
+        .andExpect(status().isCreated())
+        .andExpect(jsonPath("$.accessToken").value("new-jwt-token"))
+        .andExpect(jsonPath("$.tokenType").value("Bearer"));
+  }
+
+  @Test
   void register_withDuplicateEmail_shouldReturn409() throws Exception {
     when(authService.register(any(RegisterRequest.class)))
-        .thenThrow(new ResourceAlreadyExistsException("User", "email", "taken@example.com"));
+        .thenThrow(
+            new ResourceAlreadyExistsException(
+                "User", "email", "An account with this email already exists"));
 
     mockMvc
         .perform(

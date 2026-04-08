@@ -22,7 +22,12 @@ public class JwtTokenProvider {
 
   public JwtTokenProvider(JwtConfig jwtConfig) {
     this.jwtConfig = jwtConfig;
-    this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtConfig.secret()));
+    byte[] keyBytes = Decoders.BASE64.decode(jwtConfig.secret());
+    if (keyBytes.length < 32) {
+      throw new IllegalArgumentException(
+          "JWT secret must be at least 256 bits (32 bytes) for HS256");
+    }
+    this.signingKey = Keys.hmacShaKeyFor(keyBytes);
   }
 
   public String generateToken(UserPrincipal userPrincipal) {

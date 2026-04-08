@@ -21,17 +21,25 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: app-starter
+    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/app_starter_dev
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
-      JWT_SECRET: dGhpcyBpcyBhIHZlcnkgbG9uZyBzZWNyZXQga2V5IGZvciBkZXZlbG9wbWVudCBwdXJwb3Nlcw==
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
 volumes:
   postgres_data:

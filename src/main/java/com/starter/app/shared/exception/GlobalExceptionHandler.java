@@ -1,8 +1,10 @@
 package com.starter.app.shared.exception;
 
 import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -22,10 +24,24 @@ public class GlobalExceptionHandler {
         .body(new ApiError(HttpStatus.CONFLICT.value(), ex.getMessage()));
   }
 
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(
+            new ApiError(
+                HttpStatus.CONFLICT.value(), "A resource with the given data already exists"));
+  }
+
   @ExceptionHandler(AuthenticationException.class)
   public ResponseEntity<ApiError> handleAuthentication(AuthenticationException ex) {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
         .body(new ApiError(HttpStatus.UNAUTHORIZED.value(), ex.getMessage()));
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<ApiError> handleAccessDenied(AccessDeniedException ex) {
+    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+        .body(new ApiError(HttpStatus.FORBIDDEN.value(), "Access denied"));
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

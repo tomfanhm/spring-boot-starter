@@ -3,5 +3,7 @@ package com.starter.app.modules.user.dto;
 import jakarta.validation.constraints.Size;
 
 public record UpdateUserRequest(
-    @Size(max = 100, message = "First name must not exceed 100 characters") String firstName,
-    @Size(max = 100, message = "Last name must not exceed 100 characters") String lastName) {}
+    @Size(min = 1, max = 100, message = "First name must be between 1 and 100 characters")
+        String firstName,
+    @Size(min = 1, max = 100, message = "Last name must be between 1 and 100 characters")
+        String lastName) {}

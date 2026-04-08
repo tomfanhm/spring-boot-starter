@@ -31,6 +31,7 @@ class JwtTokenProviderTest {
             userId,
             "test@example.com",
             "password",
+            true,
             List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
     String token = jwtTokenProvider.generateToken(principal);
@@ -55,6 +56,7 @@ class JwtTokenProviderTest {
             userId,
             "test@example.com",
             "password",
+            true,
             List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
     String token = shortLivedProvider.generateToken(principal);
@@ -70,11 +72,35 @@ class JwtTokenProviderTest {
             userId,
             "test@example.com",
             "password",
+            true,
             List.of(new SimpleGrantedAuthority("ROLE_USER")));
 
     String token = jwtTokenProvider.generateToken(principal);
     String tampered = token.substring(0, token.length() - 5) + "XXXXX";
 
     assertThat(jwtTokenProvider.validateToken(tampered)).isFalse();
+  }
+
+  @Test
+  void validateToken_shouldReturnFalseForTokenSignedWithDifferentSecret() {
+    JwtConfig differentConfig =
+        new JwtConfig(
+            "YW5vdGhlci1zZWNyZXQta2V5LXRoYXQtaXMtbG9uZy1lbm91Z2gtZm9yLUhTMjU2LWFsZ29yaXRobQ==",
+            86400000L,
+            "test-issuer");
+    JwtTokenProvider differentProvider = new JwtTokenProvider(differentConfig);
+
+    UUID userId = UUID.randomUUID();
+    UserPrincipal principal =
+        new UserPrincipal(
+            userId,
+            "test@example.com",
+            "password",
+            true,
+            List.of(new SimpleGrantedAuthority("ROLE_USER")));
+
+    String token = differentProvider.generateToken(principal);
+
+    assertThat(jwtTokenProvider.validateToken(token)).isFalse();
   }
 }

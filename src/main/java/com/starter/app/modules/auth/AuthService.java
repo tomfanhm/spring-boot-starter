@@ -24,7 +24,7 @@ public class AuthService {
   private final JwtTokenProvider jwtTokenProvider;
   private final AuthMapper authMapper;
 
-  @Transactional(readOnly = true)
+  @Transactional
   public AuthResponse login(LoginRequest request) {
     User user =
         userRepository
@@ -43,7 +43,8 @@ public class AuthService {
   @Transactional
   public AuthResponse register(RegisterRequest request) {
     if (userRepository.existsByEmail(request.email())) {
-      throw new ResourceAlreadyExistsException("User", "email", request.email());
+      throw new ResourceAlreadyExistsException(
+          "User", "email", "An account with this email already exists");
     }
 
     User user = authMapper.toUser(request);

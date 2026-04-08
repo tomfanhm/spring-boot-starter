@@ -50,6 +50,7 @@ class UserControllerIntegrationTest extends PostgresTestContainerConfig {
             testUser.getId(),
             testUser.getEmail(),
             testUser.getPasswordHash(),
+            true,
             List.of(new SimpleGrantedAuthority("ROLE_USER")));
     validToken = jwtTokenProvider.generateToken(principal);
   }

@@ -2,7 +2,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
   flyway:
     enabled: true
 
@@ -11,3 +11,5 @@ app:
     secret: dGVzdC1zZWNyZXQta2V5LXRoYXQtaXMtbG9uZy1lbm91Z2gtZm9yLUhTMjU2LWFsZ29yaXRobQ==
     expiration-ms: 86400000
     issuer: spring-boot-starter-test
+  cors:
+    allowed-origins: http://localhost:3000

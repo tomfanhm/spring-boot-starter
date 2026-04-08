@@ -31,7 +31,7 @@ public class User {
   @GeneratedValue(strategy = GenerationType.UUID)
   private UUID id;
 
-  @Column(nullable = false, unique = true)
+  @Column(nullable = false)
   private String email;
 
   @Column(name = "password_hash", nullable = false)
@@ -47,6 +47,10 @@ public class User {
   @Column(nullable = false)
   @Builder.Default
   private Role role = Role.USER;
+
+  @Column(nullable = false)
+  @Builder.Default
+  private boolean enabled = true;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;

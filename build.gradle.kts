@@ -75,7 +75,7 @@ dependencies {
 tasks.withType<JavaCompile> {
     options.compilerArgs.addAll(listOf(
         "-Amapstruct.defaultComponentModel=spring",
-        "-Amapstruct.unmappedTargetPolicy=IGNORE"
+        "-Amapstruct.unmappedTargetPolicy=WARN"
     ))
 }
 
@@ -111,5 +111,16 @@ tasks.jacocoTestReport {
     reports {
         xml.required = true
         html.required = true
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.jacocoTestReport)
+    violationRules {
+        rule {
+            limit {
+                minimum = "0.60".toBigDecimal()
+            }
+        }
     }
 }

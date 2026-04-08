@@ -43,14 +43,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       String userId = jwtTokenProvider.getUserIdFromToken(token);
       User user = userRepository.findById(UUID.fromString(userId)).orElse(null);
 
-      if (user != null) {
-        UserPrincipal userPrincipal = UserPrincipal.fromUser(user);
-        UsernamePasswordAuthenticationToken authentication =
-            new UsernamePasswordAuthenticationToken(
-                userPrincipal, null, userPrincipal.getAuthorities());
-        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+      if (user == null) {
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "User not found");
+        return;
       }
+
+      if (!user.isEnabled()) {
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Account is disabled");
+        return;
+      }
+
+      UserPrincipal userPrincipal = UserPrincipal.fromUser(user);
+      UsernamePasswordAuthenticationToken authentication =
+          new UsernamePasswordAuthenticationToken(
+              userPrincipal, null, userPrincipal.getAuthorities());
+      authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+      SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 
     filterChain.doFilter(request, response);
