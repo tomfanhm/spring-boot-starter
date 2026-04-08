@@ -20,14 +20,24 @@ import com.starter.app.shared.exception.ResourceAlreadyExistsException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(AuthController.class)
-@Import({GlobalExceptionHandler.class, SecurityConfig.class})
+@Import({GlobalExceptionHandler.class, SecurityConfig.class, AuthControllerTest.TestConfig.class})
 class AuthControllerTest {
+
+  @TestConfiguration
+  static class TestConfig {
+    @Bean
+    AppProperties appProperties() {
+      return new AppProperties(null, new AppProperties.CorsConfig("http://localhost:3000"));
+    }
+  }
 
   @Autowired private MockMvc mockMvc;
   @Autowired private ObjectMapper objectMapper;
@@ -35,7 +45,6 @@ class AuthControllerTest {
   @MockitoBean private AuthService authService;
   @MockitoBean private JwtTokenProvider jwtTokenProvider;
   @MockitoBean private UserRepository userRepository;
-  @MockitoBean private AppProperties appProperties;
 
   @Test
   void login_withValidCredentials_shouldReturn200WithToken() throws Exception {
